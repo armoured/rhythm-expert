@@ -1,11 +1,17 @@
 import React from 'react';
+import Box from '@material-ui/core/Box';
+
+import Sheet from "./Sheet";
+
 import '../styles/App.css';
+
 
 function App() {
   return (
-    <div className="App">
+    <Box minHeight="100vh" className="App">
       <p>Rhythm Expert</p>
-    </div>
+      <Sheet />
+    </Box>
   );
 }
 
