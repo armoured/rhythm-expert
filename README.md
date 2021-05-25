@@ -9,7 +9,9 @@ The goal of this app is to be able to visualise and hear rhythms
 ### React and Node/Typescript
 
 Node: v14.15.5
+
 Typescript: 4.1.3
+
 Npm: 7.14.0
 
 ## Setup
