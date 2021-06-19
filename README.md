@@ -8,6 +8,14 @@ The goal of this app is to be able to visualise and hear rhythms
 
 ### React and Node/Typescript
 
+https://github.com/0xfe/vexflow
+https://github.com/0xfe/vexflow/wiki/The-VexFlow-Tutorial
+https://github.com/Tonejs/Tone.js
+http://getbem.com/naming/
+https://github.com/JedWatson/classnames#readme
+
+
+
 Node: v14.15.5
 
 Typescript: 4.1.3
