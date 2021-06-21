@@ -14,10 +14,6 @@ export type SheetProps = {
 
 const Sheet = ({notes}: SheetProps) => {
 
-    console.log("got notes", notes);
-
-    console.log("len", notes.length);
-
     // Similar to componentDidMount and componentDidUpdate:
     useEffect(() => {
         var VF = Vex.Flow;
@@ -40,7 +36,8 @@ const Sheet = ({notes}: SheetProps) => {
 
         let staveLength = 300;
 
-        //set opacity to 0
+        let positionNumber = 0;
+        
 
         let prevStaveMeasure; 
         for (let i = 0; i < numMeasures; i++) {
@@ -49,7 +46,6 @@ const Sheet = ({notes}: SheetProps) => {
                 staveMeasure = new Vex.Flow.Stave(10, staveY, staveLength);
                 // staveMeasure.addTimeSignature('4/4');
             } else {
-                console.log("prev x", prevStaveMeasure.x);
                 let nextStaveX = prevStaveMeasure.width + prevStaveMeasure.x;
                 if (nextStaveX > 1200) {
                     staveY += 100;
@@ -78,15 +74,25 @@ const Sheet = ({notes}: SheetProps) => {
             Vex.Flow.Formatter.FormatAndDraw(context, staveMeasure, notesMeasure);
 
             // notesMeasure[0].attrs.el.opacity = 0;
-            console.log("stave", staveMeasure);
-            console.log("style 0", notesMeasure[0]);
-            console.log("style", notesMeasure[0].attrs);
-            console.log("style 2", notesMeasure[0].attrs.el);
+            // console.log("stave", staveMeasure);
+            // console.log("style 0", notesMeasure[0]);
+            // console.log("style", notesMeasure[0].attrs);
+            // console.log("style 2", notesMeasure[0].attrs.el);
 
-            notesMeasure.forEach((note) => {
-                
-                // note.attrs.el.draggable();
-            })
+
+            notesMeasure[0].attrs.el.setAttribute("data-position", positionNumber);
+            notesMeasure[0].attrs.el.setAttribute("data-origposition", positionNumber);
+            positionNumber += 1;
+            notesMeasure[1].attrs.el.setAttribute("data-position", positionNumber);
+            notesMeasure[1].attrs.el.setAttribute("data-origposition", positionNumber);
+            positionNumber += 1;
+            notesMeasure[2].attrs.el.setAttribute("data-position", positionNumber);
+            notesMeasure[2].attrs.el.setAttribute("data-origposition", positionNumber);
+            positionNumber += 1
+            notesMeasure[3].attrs.el.setAttribute("data-position", positionNumber);
+            notesMeasure[3].attrs.el.setAttribute("data-origposition", positionNumber);
+            positionNumber += 1;
+
             // notesMeasure[0].attrs.el.style.opacity = 0;
 
             prevStaveMeasure = staveMeasure;
@@ -94,10 +100,6 @@ const Sheet = ({notes}: SheetProps) => {
 
         let droppables = document.getElementsByClassName("vf-stavenote");
 
-        let startPos = {
-            x: 0,
-            y: 0
-        }
 
         Draggable.create(droppables, {
             bounds: "svg",
@@ -106,61 +108,80 @@ const Sheet = ({notes}: SheetProps) => {
                 
             },
             onDragEnd: function() {
-                console.log("drag end");
+            
                 let i = droppables.length;
                 let hit = false;
                 while (--i > -1) {
                     if (this.hitTest(droppables[i])) {
                         hit = true;
-                        console.log("hit", droppables[i])
+                    
 
-                        let droppableRect = droppables[i].getBoundingClientRect();
-                        console.log("droppable rect", droppableRect);
+                        let targetPos = this.target.dataset.position;
+                        let droppablePos = (droppables[i] as any).dataset.position;
 
-                        let nextX = startPos.x - droppableRect.left; 
+                        let targetBBox = this.target.getBBox();
+                        let targetBBoxPos = (droppables[targetPos] as any).getBBox();
 
-                        // get position of droppable[i]
+                        let droppableBBox = (droppables[i] as any).getBBox();
+                        let droppableBBoxPos = (droppables[droppablePos] as any).getBBox();
 
-                        // move droppable[i] to this starting position
 
-                        // move this to the droppable[i] starting position
-                        // gsap.fromTo(droppables[i], {x: droppableRect.x, y: droppableRect.y}, {x: startPos.x, y: startPos.y, duration: 1});
-                        gsap.to(droppables[i], {x: nextX, duration: 1});
+                        let nextTargetX;
+                        let nextDroppableX;
 
-                        gsap.to(this.target, {x: -nextX});
+                        if (targetPos > droppablePos) {
+                            // going right to left
+                            nextTargetX = droppableBBoxPos.x - targetBBox.x;
+                            nextDroppableX = targetBBoxPos.x - droppableBBox.x;
+                        } else {
+                            // going left to right
+                            nextTargetX = droppableBBoxPos.x - targetBBox.x;
+                            nextDroppableX = targetBBoxPos.x - droppableBBox.x;
+                        }
+
+
+
+                        
+                        this.target.setAttribute("data-position", droppablePos);
+                        droppables[i].setAttribute("data-position", targetPos);
+
+                        
+                        gsap.to(droppables[i], {x: nextDroppableX, duration: 1});
+                        gsap.to(this.target, {x: nextTargetX, duration: 1});
 
                     }
                 }
 
                 if (!hit) {
-                    let targetRect = this.target.getBoundingClientRect();
-                    console.log("startPos.x, targetRect.x", startPos.x, targetRect.x)
-                    let moveBackX = startPos.x - targetRect.x;
-                    console.log("moveBackX", moveBackX);
-                    gsap.to(this.target, {x: -40, duration: 1});
+
+                    let targetPos = this.target.dataset.position;
+                    let targetOrigPos = this.target.dataset.origposition;
+                    let targetBBox = this.target.getBBox();
+                    let targetBBoxPos = (droppables[targetPos] as any).getBBox();
+
+                    let moveBackToX;
+
+                    if (targetPos < targetOrigPos) {
+                        moveBackToX = targetBBoxPos.x -  targetBBox.x; 
+
+
+                    } else {
+                        moveBackToX = targetBBoxPos.x - targetBBox.x
+
+                    }
+
+                    gsap.to(this.target, {x: moveBackToX, duration: 1});
+                    
                 }
             },
-            // onDragStart: function() {
-            //     console.log("drag start");
-            // }
+            
             onPress: function() {
-                console.log("on press");
-                let rect = this.target.getBoundingClientRect();
-                console.log(rect);
-                // let [x, y] = this.target.getAttribute("data-svg-origin").split(" ");
-                startPos.x = rect.left;
-                startPos.y = rect.bottom;
-                // console.log(x, y);
+              
             }
             
         });
 
     });
-
-    // useEffect(() => {
-    //     console.log("after");
-    //     console.log("doc", document.getElementById("auto1291"))
-    // });
 
     return (
         <Box height="500px" style={{"borderStyle": "solid", "borderColor": "green"}} m={1}>

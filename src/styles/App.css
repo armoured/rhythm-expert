@@ -3,3 +3,7 @@
   border-style: solid;
   border-color: red;
 }
+
+g {
+  outline: 1px dashed red;
+}
