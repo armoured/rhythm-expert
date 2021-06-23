@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Box from '@material-ui/core/Box';
 import SheetRow from './SheetRow';
 import Vex from 'vexflow';
-// typical import
+
 import gsap from "gsap";
 import Draggable from "gsap/Draggable";
 
@@ -30,14 +30,14 @@ const Sheet = ({notes}: SheetProps) => {
 
         let visibleLine = [false, false, true, false, false];
 
-        let numMeasures = 5;
+        let numMeasures = 21;
 
         let staveY = 0;
+        let stavePadding = 100;
 
         let staveLength = 300;
 
         let positionNumber = 0;
-        
 
         let prevStaveMeasure; 
         for (let i = 0; i < numMeasures; i++) {
@@ -48,7 +48,7 @@ const Sheet = ({notes}: SheetProps) => {
             } else {
                 let nextStaveX = prevStaveMeasure.width + prevStaveMeasure.x;
                 if (nextStaveX > 1200) {
-                    staveY += 100;
+                    staveY += stavePadding;
                     nextStaveX = 10;
                 }
                 staveMeasure = new Vex.Flow.Stave(
@@ -103,7 +103,7 @@ const Sheet = ({notes}: SheetProps) => {
 
         Draggable.create(droppables, {
             bounds: "svg",
-            lockAxis: true,
+            // lockAxis: true,
             onDrag: function() {
                 
             },
@@ -115,9 +115,12 @@ const Sheet = ({notes}: SheetProps) => {
                     if (this.hitTest(droppables[i])) {
                         hit = true;
                     
+                        let targetPos = parseInt(this.target.dataset.position);
+                        let droppablePos = parseInt((droppables[i] as any).dataset.position);
 
-                        let targetPos = this.target.dataset.position;
-                        let droppablePos = (droppables[i] as any).dataset.position;
+                        let targetOrigPos = parseInt(this.target.dataset.origposition);
+                        let droppableOrigPos = parseInt((droppables[i] as any).dataset.origposition);
+
 
                         let targetBBox = this.target.getBBox();
                         let targetBBoxPos = (droppables[targetPos] as any).getBBox();
@@ -128,6 +131,20 @@ const Sheet = ({notes}: SheetProps) => {
 
                         let nextTargetX;
                         let nextDroppableX;
+                        let nextTargetY;
+                        let nextDroppableY;
+
+
+                        let targLine = Math.floor(targetPos / 16);
+                        let targOrigLine = Math.floor(targetOrigPos / 16);
+                        let dropLine = Math.floor(droppablePos / 16);
+                        let dropOrigLine = Math.floor(droppableOrigPos / 16); 
+
+                        let diffLineTargOrigDrop = Math.abs(targOrigLine - dropLine);
+                        let diffLineDropOrigTarg = Math.abs(dropOrigLine - targLine);
+
+                        nextTargetY = diffLineTargOrigDrop * stavePadding;
+                        nextDroppableY = diffLineDropOrigTarg * stavePadding;
 
                         if (targetPos > droppablePos) {
                             // going right to left
@@ -139,15 +156,22 @@ const Sheet = ({notes}: SheetProps) => {
                             nextDroppableX = targetBBoxPos.x - droppableBBox.x;
                         }
 
+                        if (targOrigLine > dropLine) {
+                            // target going up so negative
+                            nextTargetY = -nextTargetY;
+                        } 
 
+                        if (dropOrigLine > targLine) {
+                            // droppable going up so negative
+                            nextDroppableY = -nextDroppableY;
+                        } 
+
+                        this.target.setAttribute("data-position", droppablePos.toString());
+                        droppables[i].setAttribute("data-position", targetPos.toString());
 
                         
-                        this.target.setAttribute("data-position", droppablePos);
-                        droppables[i].setAttribute("data-position", targetPos);
-
-                        
-                        gsap.to(droppables[i], {x: nextDroppableX, duration: 1});
-                        gsap.to(this.target, {x: nextTargetX, duration: 1});
+                        gsap.to(droppables[i], {x: nextDroppableX, y: nextDroppableY, duration: 1});
+                        gsap.to(this.target, {x: nextTargetX, y: nextTargetY, duration: 1});
 
                     }
                 }
@@ -160,17 +184,26 @@ const Sheet = ({notes}: SheetProps) => {
                     let targetBBoxPos = (droppables[targetPos] as any).getBBox();
 
                     let moveBackToX;
+                    let moveBackToY;
 
                     if (targetPos < targetOrigPos) {
                         moveBackToX = targetBBoxPos.x -  targetBBox.x; 
-
-
                     } else {
                         moveBackToX = targetBBoxPos.x - targetBBox.x
-
                     }
 
-                    gsap.to(this.target, {x: moveBackToX, duration: 1});
+                    let targLine = Math.floor(targetPos / 16);
+                    let targOrigLine = Math.floor(targetOrigPos / 16);
+                    let diffLineTargOrig = Math.abs(targLine - targOrigLine);
+
+                    moveBackToY = diffLineTargOrig * stavePadding;
+
+                    if (targLine < targOrigLine) {
+                        // needs to be negative
+                        moveBackToY = -moveBackToY;
+                    } 
+
+                    gsap.to(this.target, {x: moveBackToX, y: moveBackToY, duration: 1});
                     
                 }
             },
